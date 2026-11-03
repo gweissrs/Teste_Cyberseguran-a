@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Área restrita — Sistema Seguro</title>
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-pagina="area-restrita">
+  <header class="cabecalho">
+    <h1>Sistema Seguro</h1>
+    <span class="aviso">Versão corrigida (fins didáticos)</span>
+  </header>
+  <main class="largo">
+    <h2 id="saudacao">Carregando...</h2>
+    <dl>
+      <dt>E-mail</dt><dd id="dado-email"></dd>
+      <dt>CPF</dt><dd id="dado-cpf"></dd>
+      <dt>Perfil</dt><dd id="dado-role"></dd>
+    </dl>
+    <button id="btn-sair" type="button" class="secundario">Sair</button>
+
+    <section id="secao-admin" class="escondido">
+      <h3>Usuários cadastrados (somente admin)</h3>
+      <table>
+        <thead><tr><th>ID</th><th>Nome</th><th>E-mail</th><th>Perfil</th><th>CPF</th></tr></thead>
+        <tbody id="tabela-usuarios"></tbody>
+      </table>
+    </section>
+    <p id="mensagem" class="mensagem"></p>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

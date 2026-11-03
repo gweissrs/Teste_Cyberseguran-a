@@ -1,0 +1,21 @@
+// Prisma 7: generator "prisma-client" com output obrigatório; sem `url` no datasource
+// (a URL fica no prisma.config.ts).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Usuario {
+  id       Int      @id @default(autoincrement())
+  nome     String
+  email    String   @unique // texto puro de propósito: é a chave de busca do login (ver README)
+  senha    String // CORREÇÃO: Hash bcrypt (bcryptjs, custo 12) — nunca a senha original
+  cpf      String // CORREÇÃO: AES-256-GCM no formato iv:authTag:cifra
+  role     String   @default("user")
+  criadoEm DateTime @default(now())
+}

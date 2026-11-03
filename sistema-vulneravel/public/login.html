@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<!-- INTENCIONALMENTE INSEGURO — NÃO PUBLICAR -->
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — Sistema Vulnerável</title>
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-pagina="login">
+  <header class="cabecalho">
+    <h1>Sistema Vulnerável</h1>
+    <span class="aviso">INTENCIONALMENTE INSEGURO — NÃO PUBLICAR</span>
+  </header>
+  <main>
+    <h2>Entrar</h2>
+    <form id="form-login">
+      <label for="email">E-mail</label>
+      <input id="email" name="email" type="text" autocomplete="username" required />
+      <label for="senha">Senha</label>
+      <input id="senha" name="senha" type="password" autocomplete="current-password" required />
+      <button type="submit">Entrar</button>
+    </form>
+    <p id="mensagem" class="mensagem"></p>
+    <p class="link">Não tem conta? <a href="cadastro.html">Cadastre-se</a></p>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "name": "laboratorio-testes-seguranca",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Laboratório didático: sistema de login vulnerável x seguro + suíte de testes de segurança",
+  "type": "module",
+  "scripts": {
+    "setup": "node scripts/setup.js",
+    "vulneravel": "npm --prefix sistema-vulneravel run dev",
+    "seguro": "npm --prefix sistema-seguro run dev",
+    "ambos": "concurrently --kill-others-on-fail -n VULNERAVEL,SEGURO -c red.bold,green.bold \"npm:vulneravel\" \"npm:seguro\"",
+    "atacar": "node testes/ataques.js",
+    "reset": "node scripts/reset.js",
+    "audit": "node scripts/audit.js"
+  },
+  "dependencies": {
+    "concurrently": "^10.0.6",
+    "cross-env": "^10.1.0",
+    "dotenv": "^18.0.9",
+    "pg": "^8.23.1"
+  }
+}

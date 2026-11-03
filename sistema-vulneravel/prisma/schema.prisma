@@ -1,0 +1,22 @@
+// INTENCIONALMENTE INSEGURO — NÃO PUBLICAR
+// Prisma 7: generator "prisma-client" com output obrigatório; sem `url` no datasource
+// (a URL fica no prisma.config.ts).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Usuario {
+  id       Int      @id @default(autoincrement())
+  nome     String
+  email    String   @unique
+  senha    String // VULNERABILIDADE: Senha em texto puro — quem acessa o banco (ou um backup vazado) lê todas as senhas
+  cpf      String // VULNERABILIDADE: CPF em texto puro — dado pessoal (LGPD) legível por qualquer um com acesso ao banco
+  role     String   @default("user")
+  criadoEm DateTime @default(now())
+}

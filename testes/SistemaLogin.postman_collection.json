@@ -1,0 +1,671 @@
+{
+  "info": {
+    "name": "Laboratório — Sistema de Login (Vulnerável x Seguro)",
+    "description": "Requisições de ataque contra http://127.0.0.1:3001 (INTENCIONALMENTE INSEGURO — NÃO PUBLICAR) e http://127.0.0.1:3002 (seguro). Ajuste idAdmin/idBruno nas variáveis da coleção se os ids do seu banco forem outros (veja no pgAdmin). Use só nestes sistemas locais.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "vuln",
+      "value": "http://127.0.0.1:3001"
+    },
+    {
+      "key": "seguro",
+      "value": "http://127.0.0.1:3002"
+    },
+    {
+      "key": "idAdmin",
+      "value": "3"
+    },
+    {
+      "key": "idBruno",
+      "value": "2"
+    },
+    {
+      "key": "tokenVuln",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Sistema Vulnerável (3001)",
+      "item": [
+        {
+          "name": "00 Login normal (ana) — guarda o 'token'",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "pm.collectionVariables.set('tokenVuln', j.token);",
+                  "pm.test('logou', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ana@teste.com\",\n  \"senha\": \"Ana@12345\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{vuln}}/api/auth/login",
+              "host": [
+                "{{vuln}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Repare: o 'token' é só o id do usuário."
+          }
+        },
+        {
+          "name": "T1 SQL Injection — entra como admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@teste.com' --\",\n  \"senha\": \"qualquer\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{vuln}}/api/auth/login",
+              "host": [
+                "{{vuln}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "O -- comenta a checagem de senha. Esperado no vulnerável: 200 com role admin."
+          }
+        },
+        {
+          "name": "T1b SQL Injection — payload alternativo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"' OR '1'='1' --\",\n  \"senha\": \"x\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{vuln}}/api/auth/login",
+              "host": [
+                "{{vuln}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "T1c Erro do banco vazando (aspa solta)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"'\",\n  \"senha\": \"x\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{vuln}}/api/auth/login",
+              "host": [
+                "{{vuln}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Mostra a mensagem do Postgres, o SQL e o stack trace."
+          }
+        },
+        {
+          "name": "T4 Token falsificado — Bearer <id do admin>",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{idAdmin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{vuln}}/api/auth/me",
+              "host": [
+                "{{vuln}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Sem login como admin: só troque o número."
+          }
+        },
+        {
+          "name": "T5 IDOR — ana lê dados do bruno",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenVuln}}"
+              }
+            ],
+            "url": {
+              "raw": "{{vuln}}/api/usuarios/{{idBruno}}",
+              "host": [
+                "{{vuln}}"
+              ],
+              "path": [
+                "api",
+                "usuarios",
+                "{{idBruno}}"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "T6 Escalação — ana chama rota admin",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenVuln}}"
+              }
+            ],
+            "url": {
+              "raw": "{{vuln}}/api/admin/usuarios",
+              "host": [
+                "{{vuln}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "usuarios"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "T7a Enumeração — e-mail inexistente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"naoexiste@teste.com\",\n  \"senha\": \"x\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{vuln}}/api/auth/login",
+              "host": [
+                "{{vuln}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "T7a Enumeração — senha errada",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ana@teste.com\",\n  \"senha\": \"errada\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{vuln}}/api/auth/login",
+              "host": [
+                "{{vuln}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "T7b Força bruta — repita várias vezes (Runner)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alvo@teste.com\",\n  \"senha\": \"chute\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{vuln}}/api/auth/login",
+              "host": [
+                "{{vuln}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Use o Collection Runner com 10 iterações. Nunca vem 429."
+          }
+        },
+        {
+          "name": "T8 CORS — preflight de origem maliciosa",
+          "request": {
+            "method": "OPTIONS",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "http://site-malicioso.local"
+              },
+              {
+                "key": "Access-Control-Request-Method",
+                "value": "POST"
+              }
+            ],
+            "url": {
+              "raw": "{{vuln}}/api/auth/login",
+              "host": [
+                "{{vuln}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Veja o header Access-Control-Allow-Origin na resposta."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sistema Seguro (3002)",
+      "item": [
+        {
+          "name": "00 Login normal (ana) — cookie httpOnly",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('logou', () => pm.response.to.have.status(200));",
+                  "pm.test('veio cookie httpOnly', () => pm.expect(pm.response.headers.get('Set-Cookie') || '').to.match(/HttpOnly/i));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ana@teste.com\",\n  \"senha\": \"Ana@12345\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{seguro}}/api/auth/login",
+              "host": [
+                "{{seguro}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "O Postman guarda o cookie 'token' sozinho (Cookies > 127.0.0.1)."
+          }
+        },
+        {
+          "name": "T1 SQL Injection — bloqueado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@teste.com' --\",\n  \"senha\": \"qualquer\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{seguro}}/api/auth/login",
+              "host": [
+                "{{seguro}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Esperado: 401 credenciais inválidas."
+          }
+        },
+        {
+          "name": "T4 JWT com alg none — bloqueado",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "token=eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiIzIiwicm9sZSI6ImFkbWluIiwiZXhwIjo0MTAyNDQ0ODAwfQ."
+              }
+            ],
+            "url": {
+              "raw": "{{seguro}}/api/admin/usuarios",
+              "host": [
+                "{{seguro}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "usuarios"
+              ]
+            },
+            "description": "Token sem assinatura (alg: none) dizendo role admin. Esperado: 401. Desative o cookie jar ou apague o cookie salvo para este teste."
+          }
+        },
+        {
+          "name": "T5 IDOR — bloqueado (403)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{seguro}}/api/usuarios/{{idBruno}}",
+              "host": [
+                "{{seguro}}"
+              ],
+              "path": [
+                "api",
+                "usuarios",
+                "{{idBruno}}"
+              ]
+            },
+            "description": "Faça o login da ana antes. Esperado: 403."
+          }
+        },
+        {
+          "name": "T6 Escalação — bloqueado (403)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{seguro}}/api/admin/usuarios",
+              "host": [
+                "{{seguro}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "usuarios"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "T7a Enumeração — e-mail inexistente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"naoexiste@teste.com\",\n  \"senha\": \"x\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{seguro}}/api/auth/login",
+              "host": [
+                "{{seguro}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "T7a Enumeração — senha errada",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ana@teste.com\",\n  \"senha\": \"errada\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{seguro}}/api/auth/login",
+              "host": [
+                "{{seguro}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "T7b Força bruta — 6ª tentativa recebe 429",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alvo@teste.com\",\n  \"senha\": \"chute\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{seguro}}/api/auth/login",
+              "host": [
+                "{{seguro}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Collection Runner com 10 iterações: a partir da 6ª vem 429."
+          }
+        },
+        {
+          "name": "T8 CORS — preflight de origem maliciosa",
+          "request": {
+            "method": "OPTIONS",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "http://site-malicioso.local"
+              },
+              {
+                "key": "Access-Control-Request-Method",
+                "value": "POST"
+              }
+            ],
+            "url": {
+              "raw": "{{seguro}}/api/auth/login",
+              "host": [
+                "{{seguro}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Sem Access-Control-Allow-Origin na resposta."
+          }
+        },
+        {
+          "name": "99 Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{seguro}}/api/auth/logout",
+              "host": [
+                "{{seguro}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": ""
+          }
+        }
+      ]
+    }
+  ]
+}
